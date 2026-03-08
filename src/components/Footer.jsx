@@ -8,7 +8,6 @@ const Footer = () => {
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         
-        {/* Grid principal */}
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           
           {/* Columna 1 - Logo y descripción */}
@@ -61,13 +60,13 @@ const Footer = () => {
               </li>
               <li className="flex items-center">
                 <span className="mr-2">📱</span>
-                <a href="tel:+5491122334455" className="hover:text-white transition">
-                  +54 9 11 2233-4455
+                <a href="tel:+5493513636593" className="hover:text-white transition">
+                  +54 9 351 3636593
                 </a>
               </li>
               <li className="flex items-center">
                 <span className="mr-2">📍</span>
-                <span>Buenos Aires, Argentina</span>
+                <span>Córdoba, Argentina</span>
               </li>
             </ul>
           </div>
@@ -92,7 +91,6 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Línea divisoria */}
         <div className="border-t border-gray-800 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
             <p>© {currentYear} SportMetrics Pro. Todos los derechos reservados.</p>
