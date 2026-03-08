@@ -7,6 +7,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  base: '/mi-equipo-pro-frontend/',
   server: {
     port: 5173,
     open: true,
