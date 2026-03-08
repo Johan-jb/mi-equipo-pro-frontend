@@ -39,7 +39,7 @@ function App() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
-    window.location.href = '/';
+    window.location.href = '/mi-equipo-pro-frontend/';
   };
 
   if (cargando) {
@@ -47,13 +47,12 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/mi-equipo-pro-frontend">
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
         
-        {/* Rutas protegidas */}
         <Route 
           path="/dashboard" 
           element={user ? <Dashboard user={user} onLogout={handleLogout} /> : <Navigate to="/login" />} 
@@ -66,6 +65,9 @@ function App() {
           path="/multimedia" 
           element={user ? <Multimedia /> : <Navigate to="/login" />} 
         />
+        
+        {/* Ruta comodín: cualquier otra URL redirige a la raíz */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
   );
