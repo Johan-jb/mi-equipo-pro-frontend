@@ -21,10 +21,7 @@ function Login({ onLogin }) {
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
 
-      // Llamar a onLogin para actualizar el estado en App.jsx
       onLogin(user);
-      
-      // Navegar sin recargar la página
       navigate('/dashboard');
 
     } catch (err) {
