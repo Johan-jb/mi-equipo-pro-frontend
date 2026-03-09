@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -39,7 +39,7 @@ function App() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
-    window.location.href = '/mi-equipo-pro-frontend/';
+    window.location.href = '/mi-equipo-pro-frontend/#/';
   };
 
   if (cargando) {
@@ -47,7 +47,7 @@ function App() {
   }
 
   return (
-    <BrowserRouter basename="/mi-equipo-pro-frontend">
+    <HashRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
@@ -69,7 +69,7 @@ function App() {
         {/* Ruta comodín: cualquier otra URL redirige a la raíz */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
