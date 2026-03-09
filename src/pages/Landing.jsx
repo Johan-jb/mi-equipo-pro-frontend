@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
 import Features from '../components/Features';
@@ -23,18 +24,18 @@ const Landing = () => {
               Unite a los clubes que ya confían en SportMetrics Pro para el desarrollo de sus jugadores.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="/register"
+              <Link
+                to="/register"
                 className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
               >
                 Crear cuenta gratuita
-              </a>
-              <a
-                href="/login"
+              </Link>
+              <Link
+                to="/login"
                 className="bg-transparent border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition"
               >
                 Iniciar sesión
-              </a>
+              </Link>
             </div>
             <p className="text-white text-sm mt-4 opacity-75">
               Sin compromiso. Podés cancelar cuando quieras.
