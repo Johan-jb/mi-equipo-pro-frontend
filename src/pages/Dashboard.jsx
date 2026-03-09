@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import ModalAgregarJugador from '../components/ModalAgregarJugador';
 
 function Dashboard({ user, onLogout }) {
   const [jugadores, setJugadores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const puedeCrear = user?.rol === 'admin' || user?.rol === 'dt';
 
   useEffect(() => {
     cargarJugadores();
@@ -20,6 +23,10 @@ function Dashboard({ user, onLogout }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleJugadorCreado = (nuevoJugador) => {
+    setJugadores([nuevoJugador, ...jugadores]);
   };
 
   const formatearFecha = (fechaString) => {
@@ -77,6 +84,18 @@ function Dashboard({ user, onLogout }) {
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-8">Mis Jugadores</h1>
+
+        {/* Botón para agregar jugador (solo visible para admin y dt) */}
+        {puedeCrear && (
+          <div className="mb-6 flex justify-end">
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2"
+            >
+              <span className="text-xl">+</span> Agregar Jugador
+            </button>
+          </div>
+        )}
 
         {!loading && jugadores.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-xl shadow">
@@ -174,6 +193,14 @@ function Dashboard({ user, onLogout }) {
           </div>
         )}
       </div>
+
+      {/* Modal para agregar jugador */}
+      {showModal && (
+        <ModalAgregarJugador
+          onClose={() => setShowModal(false)}
+          onJugadorCreado={handleJugadorCreado}
+        />
+      )}
     </div>
   );
 }

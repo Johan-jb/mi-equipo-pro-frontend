@@ -28,7 +28,8 @@ function App() {
         localStorage.removeItem('user');
       }
     }
-    setCargando(false);
+    // Simulamos un pequeño retraso para que el estado se asiente
+    setTimeout(() => setCargando(false), 100);
   }, []);
 
   const handleLogin = (userData) => {
