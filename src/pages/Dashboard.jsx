@@ -59,7 +59,7 @@ function Dashboard({ user, onLogout }) {
             <div className="flex items-center space-x-4">
               <span className="text-gray-600">Hola, {user?.nombre_completo}</span>
               <button
-                onClick={() => window.location.href = '/multimedia'}
+                onClick={() => window.location.href = '/mi-equipo-pro-frontend/#/multimedia'}
                 className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
               >
                 📸 Multimedia
