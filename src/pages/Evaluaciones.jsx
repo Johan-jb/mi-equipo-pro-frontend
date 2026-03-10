@@ -8,6 +8,7 @@ function Evaluaciones() {
   const navigate = useNavigate();
   const [jugador, setJugador] = useState(null);
   const [evaluaciones, setEvaluaciones] = useState([]);
+  const [habilidades, setHabilidades] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -17,12 +18,15 @@ function Evaluaciones() {
 
   const cargarDatos = async () => {
     try {
-      const [jugadorRes, evalRes] = await Promise.all([
+      const [jugadorRes, evalRes, habRes] = await Promise.all([
         api.get(`/jugadores/${id}`),
-        api.get(`/evaluaciones/jugador/${id}`)
+        api.get(`/evaluaciones/jugador/${id}`),
+        api.get(`/habilidades/ultima/${id}`)
       ]);
+      
       setJugador(jugadorRes.data.jugador);
       setEvaluaciones(evalRes.data.evaluaciones);
+      setHabilidades(habRes.data.habilidad);
     } catch (err) {
       setError('Error al cargar las evaluaciones');
     } finally {
@@ -130,40 +134,42 @@ function Evaluaciones() {
               </div>
             </div>
 
-            {/* Habilidades */}
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Diagnóstico Inicial</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div>
-                  <span className="text-gray-600">Reacción:</span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="font-bold text-gray-700">{jugador.habilidades?.reaccion * 10}%</span>
-                    {barraProgreso(jugador.habilidades?.reaccion)}
+            {/* Habilidades con valores reales */}
+            {habilidades && (
+              <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">Diagnóstico Inicial</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div>
+                    <span className="text-gray-600">Reacción:</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-bold text-gray-700">{habilidades.reaccion * 10}%</span>
+                      {barraProgreso(habilidades.reaccion)}
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <span className="text-gray-600">Equilibrio:</span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="font-bold text-gray-700">{jugador.habilidades?.equilibrio * 10}%</span>
-                    {barraProgreso(jugador.habilidades?.equilibrio)}
+                  <div>
+                    <span className="text-gray-600">Equilibrio:</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-bold text-gray-700">{habilidades.equilibrio * 10}%</span>
+                      {barraProgreso(habilidades.equilibrio)}
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <span className="text-gray-600">Velocidad:</span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="font-bold text-gray-700">{jugador.habilidades?.velocidad * 10}%</span>
-                    {barraProgreso(jugador.habilidades?.velocidad)}
+                  <div>
+                    <span className="text-gray-600">Velocidad:</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-bold text-gray-700">{habilidades.velocidad * 10}%</span>
+                      {barraProgreso(habilidades.velocidad)}
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <span className="text-gray-600">Fuerza:</span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="font-bold text-gray-700">{jugador.habilidades?.fuerza * 10}%</span>
-                    {barraProgreso(jugador.habilidades?.fuerza)}
+                  <div>
+                    <span className="text-gray-600">Fuerza:</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-bold text-gray-700">{habilidades.fuerza * 10}%</span>
+                      {barraProgreso(habilidades.fuerza)}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {evaluaciones.length > 0 && (
               <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
