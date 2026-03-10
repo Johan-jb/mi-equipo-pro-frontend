@@ -8,6 +8,7 @@ function Evaluaciones() {
   const navigate = useNavigate();
   const [jugador, setJugador] = useState(null);
   const [evaluaciones, setEvaluaciones] = useState([]);
+  const [habilidades, setHabilidades] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -17,12 +18,15 @@ function Evaluaciones() {
 
   const cargarDatos = async () => {
     try {
-      const [jugadorRes, evalRes] = await Promise.all([
+      const [jugadorRes, evalRes, habRes] = await Promise.all([
         api.get(`/jugadores/${id}`),
-        api.get(`/evaluaciones/jugador/${id}`)
+        api.get(`/evaluaciones/jugador/${id}`),
+        api.get(`/habilidades/jugador/${id}`)
       ]);
+      
       setJugador(jugadorRes.data.jugador);
       setEvaluaciones(evalRes.data.evaluaciones);
+      setHabilidades(habRes.data.habilidades);
     } catch (err) {
       setError('Error al cargar las evaluaciones');
     } finally {
@@ -38,14 +42,12 @@ function Evaluaciones() {
     });
   };
 
-  // Función para descargar el PDF usando la NUEVA ruta de informes
   const descargarPDF = async () => {
     try {
       const response = await api.get(`/informes/jugador/${id}/pdf`, {
-        responseType: 'blob' // Importante para recibir el archivo
+        responseType: 'blob'
       });
       
-      // Crear un enlace de descarga con el blob recibido
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -54,7 +56,6 @@ function Evaluaciones() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      
     } catch (error) {
       console.error('Error descargando PDF:', error);
       alert('Error al descargar el PDF');
@@ -67,6 +68,20 @@ function Evaluaciones() {
     asistencias: e.asistencias,
     precision: e.precision_pases || 0
   })).reverse();
+
+  const barraProgreso = (valor) => {
+    const porcentaje = valor * 10;
+    let colorBarra = 'bg-blue-600';
+    if (porcentaje < 50) colorBarra = 'bg-red-500';
+    else if (porcentaje < 70) colorBarra = 'bg-yellow-500';
+    else colorBarra = 'bg-green-500';
+    
+    return (
+      <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className={`h-full ${colorBarra}`} style={{ width: `${porcentaje}%` }}></div>
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -99,7 +114,7 @@ function Evaluaciones() {
 
         {jugador && (
           <>
-            {/* Header del jugador */}
+            {/* Header del jugador con botón PDF */}
             <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
               <div className="flex justify-between items-start">
                 <div>
@@ -112,7 +127,6 @@ function Evaluaciones() {
                     <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">{jugador.pierna_habil}</span>
                   </div>
                 </div>
-                {/* Botón para descargar PDF */}
                 <button
                   onClick={descargarPDF}
                   className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition flex items-center gap-2"
@@ -121,6 +135,43 @@ function Evaluaciones() {
                 </button>
               </div>
             </div>
+
+            {/* Habilidades (diagnóstico inicial) */}
+            {habilidades && (
+              <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">Diagnóstico Inicial</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div>
+                    <span className="text-gray-600">Reacción:</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-bold text-gray-700">{habilidades.reaccion * 10}%</span>
+                      {barraProgreso(habilidades.reaccion)}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Equilibrio:</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-bold text-gray-700">{habilidades.equilibrio * 10}%</span>
+                      {barraProgreso(habilidades.equilibrio)}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Velocidad:</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-bold text-gray-700">{habilidades.velocidad * 10}%</span>
+                      {barraProgreso(habilidades.velocidad)}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Fuerza:</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-bold text-gray-700">{habilidades.fuerza * 10}%</span>
+                      {barraProgreso(habilidades.fuerza)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Gráfico de rendimiento */}
             {evaluaciones.length > 0 && (
@@ -136,27 +187,40 @@ function Evaluaciones() {
                       <Legend />
                       <Line type="monotone" dataKey="goles" stroke="#3b82f6" name="Goles" strokeWidth={2} />
                       <Line type="monotone" dataKey="asistencias" stroke="#10b981" name="Asistencias" strokeWidth={2} />
+                      <Line type="monotone" dataKey="precision" stroke="#8b5cf6" name="Precisión %" strokeWidth={2} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               </div>
             )}
 
-            {/* Lista de evaluaciones */}
+            {/* Botón Nueva Evaluación */}
+            <div className="mb-6 flex justify-end">
+              <button className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2">
+                <span className="text-xl">+</span> Nueva Evaluación
+              </button>
+            </div>
+
+            {/* Historial de Evaluaciones */}
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Historial de Evaluaciones</h2>
 
             {evaluaciones.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-xl shadow">
                 <p className="text-gray-500 text-lg">No hay evaluaciones cargadas para este jugador</p>
+                <p className="text-gray-400 mt-2">Hacé clic en "Nueva Evaluación" para comenzar</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {evaluaciones.map((evaluacion) => (
                   <div key={evaluacion.id_evaluacion} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                      {formatearFecha(evaluacion.fecha_evaluacion)}
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-xl font-semibold text-gray-800">
+                        {formatearFecha(evaluacion.fecha_evaluacion)}
+                      </h3>
+                      <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">Partido</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                       <div className="bg-blue-50 p-4 rounded-lg text-center">
                         <div className="text-3xl font-bold text-blue-600">{evaluacion.goles}</div>
                         <div className="text-sm text-gray-600">Goles</div>
@@ -171,13 +235,28 @@ function Evaluaciones() {
                           <div className="text-sm text-gray-600">Precisión pases</div>
                         </div>
                       )}
-                      {evaluacion.minutos_jugados && (
+                      {evaluacion.porcentaje_duelos_ganados && (
                         <div className="bg-orange-50 p-4 rounded-lg text-center">
-                          <div className="text-3xl font-bold text-orange-600">{evaluacion.minutos_jugados}</div>
-                          <div className="text-sm text-gray-600">Minutos</div>
+                          <div className="text-3xl font-bold text-orange-600">{Math.round(evaluacion.porcentaje_duelos_ganados)}%</div>
+                          <div className="text-sm text-gray-600">Duelos ganados</div>
                         </div>
                       )}
                     </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                      {evaluacion.minutos_jugados && <div>⏱️ Minutos: {evaluacion.minutos_jugados}</div>}
+                      {evaluacion.distancia_recorrida_km && <div>📏 Distancia: {evaluacion.distancia_recorrida_km} km</div>}
+                      {evaluacion.velocidad_maxima_kmh && <div>⚡ Vel. máx: {evaluacion.velocidad_maxima_kmh} km/h</div>}
+                      {evaluacion.precision_remates && <div>🎯 Remates: {evaluacion.precision_remates}%</div>}
+                    </div>
+
+                    {evaluacion.observaciones && (
+                      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                        <p className="text-sm text-gray-700 italic">
+                          "{evaluacion.observaciones.destacar || JSON.stringify(evaluacion.observaciones)}"
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
