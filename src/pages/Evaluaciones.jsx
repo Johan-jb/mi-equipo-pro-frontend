@@ -8,7 +8,6 @@ function Evaluaciones() {
   const navigate = useNavigate();
   const [jugador, setJugador] = useState(null);
   const [evaluaciones, setEvaluaciones] = useState([]);
-  const [habilidades, setHabilidades] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -18,15 +17,12 @@ function Evaluaciones() {
 
   const cargarDatos = async () => {
     try {
-      const [jugadorRes, evalRes, habRes] = await Promise.all([
+      const [jugadorRes, evalRes] = await Promise.all([
         api.get(`/jugadores/${id}`),
-        api.get(`/evaluaciones/jugador/${id}`),
-        api.get(`/habilidades/jugador/${id}`)
+        api.get(`/evaluaciones/jugador/${id}`)
       ]);
-      
       setJugador(jugadorRes.data.jugador);
       setEvaluaciones(evalRes.data.evaluaciones);
-      setHabilidades(habRes.data.habilidades);
     } catch (err) {
       setError('Error al cargar las evaluaciones');
     } finally {
@@ -93,7 +89,6 @@ function Evaluaciones() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
       <nav className="bg-white shadow-lg">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
@@ -114,7 +109,6 @@ function Evaluaciones() {
 
         {jugador && (
           <>
-            {/* Header del jugador con botón PDF */}
             <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
               <div className="flex justify-between items-start">
                 <div>
@@ -136,44 +130,41 @@ function Evaluaciones() {
               </div>
             </div>
 
-            {/* Habilidades (diagnóstico inicial) */}
-            {habilidades && (
-              <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Diagnóstico Inicial</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  <div>
-                    <span className="text-gray-600">Reacción:</span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="font-bold text-gray-700">{habilidades.reaccion * 10}%</span>
-                      {barraProgreso(habilidades.reaccion)}
-                    </div>
+            {/* Habilidades */}
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">Diagnóstico Inicial</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div>
+                  <span className="text-gray-600">Reacción:</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="font-bold text-gray-700">{jugador.habilidades?.reaccion * 10}%</span>
+                    {barraProgreso(jugador.habilidades?.reaccion)}
                   </div>
-                  <div>
-                    <span className="text-gray-600">Equilibrio:</span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="font-bold text-gray-700">{habilidades.equilibrio * 10}%</span>
-                      {barraProgreso(habilidades.equilibrio)}
-                    </div>
+                </div>
+                <div>
+                  <span className="text-gray-600">Equilibrio:</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="font-bold text-gray-700">{jugador.habilidades?.equilibrio * 10}%</span>
+                    {barraProgreso(jugador.habilidades?.equilibrio)}
                   </div>
-                  <div>
-                    <span className="text-gray-600">Velocidad:</span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="font-bold text-gray-700">{habilidades.velocidad * 10}%</span>
-                      {barraProgreso(habilidades.velocidad)}
-                    </div>
+                </div>
+                <div>
+                  <span className="text-gray-600">Velocidad:</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="font-bold text-gray-700">{jugador.habilidades?.velocidad * 10}%</span>
+                    {barraProgreso(jugador.habilidades?.velocidad)}
                   </div>
-                  <div>
-                    <span className="text-gray-600">Fuerza:</span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="font-bold text-gray-700">{habilidades.fuerza * 10}%</span>
-                      {barraProgreso(habilidades.fuerza)}
-                    </div>
+                </div>
+                <div>
+                  <span className="text-gray-600">Fuerza:</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="font-bold text-gray-700">{jugador.habilidades?.fuerza * 10}%</span>
+                    {barraProgreso(jugador.habilidades?.fuerza)}
                   </div>
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* Gráfico de rendimiento */}
             {evaluaciones.length > 0 && (
               <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">Evolución del rendimiento</h2>
@@ -194,14 +185,12 @@ function Evaluaciones() {
               </div>
             )}
 
-            {/* Botón Nueva Evaluación */}
             <div className="mb-6 flex justify-end">
               <button className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2">
                 <span className="text-xl">+</span> Nueva Evaluación
               </button>
             </div>
 
-            {/* Historial de Evaluaciones */}
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Historial de Evaluaciones</h2>
 
             {evaluaciones.length === 0 ? (
