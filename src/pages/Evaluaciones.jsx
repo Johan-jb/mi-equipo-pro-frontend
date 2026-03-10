@@ -18,15 +18,23 @@ function Evaluaciones() {
 
   const cargarDatos = async () => {
     try {
-      const [jugadorRes, evalRes, habRes] = await Promise.all([
-        api.get(`/jugadores/${id}`),
-        api.get(`/evaluaciones/jugador/${id}`),
-        api.get(`/habilidades/ultima/${id}`)
-      ]);
-      
+      // Cargar jugador
+      const jugadorRes = await api.get(`/jugadores/${id}`);
       setJugador(jugadorRes.data.jugador);
+
+      // Cargar evaluaciones
+      const evalRes = await api.get(`/evaluaciones/jugador/${id}`);
       setEvaluaciones(evalRes.data.evaluaciones);
-      setHabilidades(habRes.data.habilidad);
+
+      // Cargar habilidades (esto es lo que estaba fallando)
+      try {
+        const habRes = await api.get(`/habilidades/ultima/${id}`);
+        setHabilidades(habRes.data.habilidad);
+      } catch (habErr) {
+        console.log('No hay habilidades para este jugador');
+        setHabilidades(null);
+      }
+
     } catch (err) {
       setError('Error al cargar las evaluaciones');
     } finally {
@@ -134,7 +142,7 @@ function Evaluaciones() {
               </div>
             </div>
 
-            {/* Habilidades con valores reales */}
+            {/* HABILIDADES - Versión de ayer */}
             {habilidades && (
               <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">Diagnóstico Inicial</h2>
