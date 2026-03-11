@@ -18,20 +18,17 @@ function Evaluaciones() {
 
   const cargarDatos = async () => {
     try {
-      // Cargar jugador
       const jugadorRes = await api.get(`/jugadores/${id}`);
       setJugador(jugadorRes.data.jugador);
 
-      // Cargar evaluaciones
       const evalRes = await api.get(`/evaluaciones/jugador/${id}`);
       setEvaluaciones(evalRes.data.evaluaciones);
 
-      // Cargar habilidades (esto es lo que estaba fallando)
       try {
         const habRes = await api.get(`/habilidades/ultima/${id}`);
         setHabilidades(habRes.data.habilidad);
       } catch (habErr) {
-        console.log('No hay habilidades para este jugador');
+        console.log('No hay habilidades');
         setHabilidades(null);
       }
 
@@ -142,7 +139,7 @@ function Evaluaciones() {
               </div>
             </div>
 
-            {/* HABILIDADES - Versión de ayer */}
+            {/* HABILIDADES */}
             {habilidades && (
               <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">Diagnóstico Inicial</h2>
@@ -209,15 +206,14 @@ function Evaluaciones() {
 
             {evaluaciones.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-xl shadow">
-                <p className="text-gray-500 text-lg">No hay evaluaciones cargadas para este jugador</p>
-                <p className="text-gray-400 mt-2">Hacé clic en "Nueva Evaluación" para comenzar</p>
+                <p className="text-gray-500 text-lg">No hay evaluaciones</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {evaluaciones.map((evaluacion) => (
-                  <div key={evaluacion.id_evaluacion} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition">
+                  <div key={evaluacion.id_evaluacion} className="bg-white rounded-xl shadow-lg p-6">
                     <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-xl font-semibold text-gray-800">
+                      <h3 className="text-xl font-semibold">
                         {formatearFecha(evaluacion.fecha_evaluacion)}
                       </h3>
                       <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">Partido</span>
@@ -226,38 +222,23 @@ function Evaluaciones() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                       <div className="bg-blue-50 p-4 rounded-lg text-center">
                         <div className="text-3xl font-bold text-blue-600">{evaluacion.goles}</div>
-                        <div className="text-sm text-gray-600">Goles</div>
+                        <div className="text-sm">Goles</div>
                       </div>
                       <div className="bg-green-50 p-4 rounded-lg text-center">
                         <div className="text-3xl font-bold text-green-600">{evaluacion.asistencias}</div>
-                        <div className="text-sm text-gray-600">Asistencias</div>
+                        <div className="text-sm">Asistencias</div>
                       </div>
                       {evaluacion.precision_pases && (
                         <div className="bg-purple-50 p-4 rounded-lg text-center">
                           <div className="text-3xl font-bold text-purple-600">{evaluacion.precision_pases}%</div>
-                          <div className="text-sm text-gray-600">Precisión pases</div>
+                          <div className="text-sm">Precisión</div>
                         </div>
                       )}
-                      {evaluacion.porcentaje_duelos_ganados && (
-                        <div className="bg-orange-50 p-4 rounded-lg text-center">
-                          <div className="text-3xl font-bold text-orange-600">{Math.round(evaluacion.porcentaje_duelos_ganados)}%</div>
-                          <div className="text-sm text-gray-600">Duelos ganados</div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                      {evaluacion.minutos_jugados && <div>⏱️ Minutos: {evaluacion.minutos_jugados}</div>}
-                      {evaluacion.distancia_recorrida_km && <div>📏 Distancia: {evaluacion.distancia_recorrida_km} km</div>}
-                      {evaluacion.velocidad_maxima_kmh && <div>⚡ Vel. máx: {evaluacion.velocidad_maxima_kmh} km/h</div>}
-                      {evaluacion.precision_remates && <div>🎯 Remates: {evaluacion.precision_remates}%</div>}
                     </div>
 
                     {evaluacion.observaciones && (
                       <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-700 italic">
-                          "{evaluacion.observaciones.destacar || JSON.stringify(evaluacion.observaciones)}"
-                        </p>
+                        <p className="text-sm italic">"{evaluacion.observaciones.destacar}"</p>
                       </div>
                     )}
                   </div>
