@@ -8,7 +8,7 @@ function ModalConfirmarEliminar({ jugador, onConfirm, onCancel }) {
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Confirmar Eliminación</h2>
           
           <p className="text-gray-600 mb-6">
-            ¿Estás seguro que deseas eliminar a <span className="font-bold">{jugador.nombre} {jugador.apellido}</span>?
+            ¿Estás seguro que deseas eliminar este elemento?
             <br />
             <span className="text-sm text-red-500">Esta acción no se puede deshacer.</span>
           </p>
