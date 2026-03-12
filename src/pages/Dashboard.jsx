@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import ModalAgregarJugador from '../components/ModalAgregarJugador';
+import ModalEditarJugador from '../components/ModalEditarJugador';
+import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar';
 
 function Dashboard({ user, onLogout }) {
   const [jugadores, setJugadores] = useState([]);
@@ -8,8 +11,14 @@ function Dashboard({ user, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showModal, setShowModal] = useState(false);
+  const [showAgregarModal, setShowAgregarModal] = useState(false);
+  const [showEditarModal, setShowEditarModal] = useState(false);
+  const [showEliminarModal, setShowEliminarModal] = useState(false);
+  const [jugadorSeleccionado, setJugadorSeleccionado] = useState(null);
+  
   const puedeCrear = user?.rol === 'admin' || user?.rol === 'dt';
+  const puedeEditar = user?.rol === 'admin' || user?.rol === 'dt';
+  const puedeEliminar = user?.rol === 'admin' || user?.rol === 'dt';
 
   useEffect(() => {
     cargarJugadores();
@@ -49,6 +58,37 @@ function Dashboard({ user, onLogout }) {
   const handleJugadorCreado = (nuevoJugador) => {
     setJugadores([nuevoJugador, ...jugadores]);
     setJugadoresFiltrados([nuevoJugador, ...jugadoresFiltrados]);
+  };
+
+  const handleEditarClick = (jugador) => {
+    setJugadorSeleccionado(jugador);
+    setShowEditarModal(true);
+  };
+
+  const handleJugadorActualizado = (jugadorActualizado) => {
+    const nuevosJugadores = jugadores.map(j => 
+      j.id_jugador === jugadorActualizado.id_jugador ? jugadorActualizado : j
+    );
+    setJugadores(nuevosJugadores);
+    setJugadoresFiltrados(nuevosJugadores);
+  };
+
+  const handleEliminarClick = (jugador) => {
+    setJugadorSeleccionado(jugador);
+    setShowEliminarModal(true);
+  };
+
+  const handleEliminarConfirmado = async () => {
+    try {
+      await api.delete(`/jugadores/${jugadorSeleccionado.id_jugador}`);
+      const nuevosJugadores = jugadores.filter(j => j.id_jugador !== jugadorSeleccionado.id_jugador);
+      setJugadores(nuevosJugadores);
+      setJugadoresFiltrados(nuevosJugadores);
+      setShowEliminarModal(false);
+      setJugadorSeleccionado(null);
+    } catch (err) {
+      alert('Error al eliminar jugador');
+    }
   };
 
   const formatearFecha = (fechaString) => {
@@ -128,11 +168,11 @@ function Dashboard({ user, onLogout }) {
           </div>
         </div>
 
-        {/* Botón para agregar jugador (solo visible para admin y dt) */}
+        {/* Botón para agregar jugador */}
         {puedeCrear && (
           <div className="mb-6 flex justify-end">
             <button
-              onClick={() => setShowModal(true)}
+              onClick={() => setShowAgregarModal(true)}
               className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2"
             >
               <span className="text-xl">+</span> Agregar Jugador
@@ -168,6 +208,24 @@ function Dashboard({ user, onLogout }) {
                     <p><span className="font-semibold">Pierna hábil:</span> {jugador.pierna_habil}</p>
                     {jugador.dni && <p><span className="font-semibold">DNI:</span> {jugador.dni}</p>}
                   </div>
+
+                  {/* Botones de acción (solo para admin/dt) */}
+                  {puedeEditar && (
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        onClick={() => handleEditarClick(jugador)}
+                        className="flex-1 bg-yellow-500 text-white py-2 rounded-lg text-sm hover:bg-yellow-600 transition flex items-center justify-center gap-1"
+                      >
+                        ✏️ Editar
+                      </button>
+                      <button
+                        onClick={() => handleEliminarClick(jugador)}
+                        className="flex-1 bg-red-500 text-white py-2 rounded-lg text-sm hover:bg-red-600 transition flex items-center justify-center gap-1"
+                      >
+                        🗑️ Eliminar
+                      </button>
+                    </div>
+                  )}
 
                   {jugador.ultima_evaluacion ? (
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -246,11 +304,33 @@ function Dashboard({ user, onLogout }) {
         )}
       </div>
 
-      {/* Modal para agregar jugador (ya existente) */}
-      {showModal && (
+      {/* Modales */}
+      {showAgregarModal && (
         <ModalAgregarJugador
-          onClose={() => setShowModal(false)}
+          onClose={() => setShowAgregarModal(false)}
           onJugadorCreado={handleJugadorCreado}
+        />
+      )}
+
+      {showEditarModal && jugadorSeleccionado && (
+        <ModalEditarJugador
+          jugador={jugadorSeleccionado}
+          onClose={() => {
+            setShowEditarModal(false);
+            setJugadorSeleccionado(null);
+          }}
+          onJugadorActualizado={handleJugadorActualizado}
+        />
+      )}
+
+      {showEliminarModal && jugadorSeleccionado && (
+        <ModalConfirmarEliminar
+          jugador={jugadorSeleccionado}
+          onConfirm={handleEliminarConfirmado}
+          onCancel={() => {
+            setShowEliminarModal(false);
+            setJugadorSeleccionado(null);
+          }}
         />
       )}
     </div>
