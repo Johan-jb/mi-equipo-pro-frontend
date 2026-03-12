@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import ModalAgregarJugador from '../components/ModalAgregarJugador';
 
 function Dashboard({ user, onLogout }) {
   const [jugadores, setJugadores] = useState([]);
+  const [jugadoresFiltrados, setJugadoresFiltrados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const puedeCrear = user?.rol === 'admin' || user?.rol === 'dt';
 
@@ -14,10 +15,15 @@ function Dashboard({ user, onLogout }) {
     cargarJugadores();
   }, []);
 
+  useEffect(() => {
+    filtrarJugadores();
+  }, [searchTerm, jugadores]);
+
   const cargarJugadores = async () => {
     try {
       const response = await api.get('/jugadores');
       setJugadores(response.data.jugadores);
+      setJugadoresFiltrados(response.data.jugadores);
     } catch (err) {
       setError('Error al cargar jugadores');
     } finally {
@@ -25,8 +31,24 @@ function Dashboard({ user, onLogout }) {
     }
   };
 
+  const filtrarJugadores = () => {
+    if (!searchTerm.trim()) {
+      setJugadoresFiltrados(jugadores);
+      return;
+    }
+
+    const term = searchTerm.toLowerCase().trim();
+    const filtrados = jugadores.filter(jugador => 
+      jugador.nombre.toLowerCase().includes(term) ||
+      jugador.apellido.toLowerCase().includes(term) ||
+      (jugador.dni && jugador.dni.includes(term))
+    );
+    setJugadoresFiltrados(filtrados);
+  };
+
   const handleJugadorCreado = (nuevoJugador) => {
     setJugadores([nuevoJugador, ...jugadores]);
+    setJugadoresFiltrados([nuevoJugador, ...jugadoresFiltrados]);
   };
 
   const formatearFecha = (fechaString) => {
@@ -83,7 +105,28 @@ function Dashboard({ user, onLogout }) {
       </nav>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">Mis Jugadores</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">Mis Jugadores</h1>
+          
+          {/* Buscador */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Buscar por nombre, apellido o DNI..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-80 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Botón para agregar jugador (solo visible para admin y dt) */}
         {puedeCrear && (
@@ -97,13 +140,22 @@ function Dashboard({ user, onLogout }) {
           </div>
         )}
 
-        {!loading && jugadores.length === 0 ? (
+        {/* Resultado de búsqueda */}
+        {searchTerm && (
+          <div className="mb-4 text-sm text-gray-600">
+            Se encontraron {jugadoresFiltrados.length} jugador(es) para "{searchTerm}"
+          </div>
+        )}
+
+        {!loading && jugadoresFiltrados.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-xl shadow">
-            <p className="text-gray-500 text-lg">No hay jugadores cargados</p>
+            <p className="text-gray-500 text-lg">
+              {searchTerm ? 'No hay jugadores que coincidan con la búsqueda' : 'No hay jugadores cargados'}
+            </p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {jugadores.map((jugador) => (
+            {jugadoresFiltrados.map((jugador) => (
               <div key={jugador.id_jugador} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition">
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-gray-800 mb-2">
@@ -194,7 +246,7 @@ function Dashboard({ user, onLogout }) {
         )}
       </div>
 
-      {/* Modal para agregar jugador */}
+      {/* Modal para agregar jugador (ya existente) */}
       {showModal && (
         <ModalAgregarJugador
           onClose={() => setShowModal(false)}
