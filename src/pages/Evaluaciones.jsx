@@ -5,6 +5,7 @@ import api from '../services/api';
 import ModalNuevaEvaluacion from '../components/ModalNuevaEvaluacion';
 import ModalEditarEvaluacion from '../components/ModalEditarEvaluacion';
 import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar';
+import ModalHabilidades from '../components/ModalHabilidades'; // 👈 NUEVO IMPORT
 
 function Evaluaciones() {
   const { id } = useParams();
@@ -18,6 +19,7 @@ function Evaluaciones() {
   const [showEditarModal, setShowEditarModal] = useState(false);
   const [showEliminarModal, setShowEliminarModal] = useState(false);
   const [evaluacionSeleccionada, setEvaluacionSeleccionada] = useState(null);
+  const [showHabilidadesModal, setShowHabilidadesModal] = useState(false); // 👈 NUEVO STATE
 
   const user = JSON.parse(localStorage.getItem('user'));
   const puedeEditar = user?.rol === 'admin' || user?.rol === 'dt' || user?.rol === 'preparador';
@@ -42,6 +44,11 @@ function Evaluaciones() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 👇 NUEVA FUNCIÓN
+  const handleHabilidadesCargadas = (nuevasHabilidades) => {
+    setHabilidades(nuevasHabilidades);
   };
 
   const formatearFecha = (fecha) => {
@@ -227,7 +234,13 @@ function Evaluaciones() {
               </div>
             )}
 
-            <div className="mb-6 flex justify-end">
+            <div className="mb-6 flex justify-end gap-4"> {/* 👈 Agregué gap-4 para separar botones */}
+              <button
+                onClick={() => setShowHabilidadesModal(true)}
+                className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition flex items-center gap-2"
+              >
+                <span className="text-xl">📊</span> Diagnóstico Inicial
+              </button>
               <button
                 onClick={() => setShowNuevaModal(true)}
                 className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2"
@@ -348,6 +361,15 @@ function Evaluaciones() {
             setShowEliminarModal(false);
             setEvaluacionSeleccionada(null);
           }}
+        />
+      )}
+
+      {/* 👇 NUEVO MODAL DE HABILIDADES */}
+      {showHabilidadesModal && (
+        <ModalHabilidades
+          jugadorId={id}
+          onClose={() => setShowHabilidadesModal(false)}
+          onHabilidadesCargadas={handleHabilidadesCargadas}
         />
       )}
     </div>
