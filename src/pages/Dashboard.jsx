@@ -20,6 +20,22 @@ function Dashboard({ user, onLogout }) {
   const puedeEditar = user?.rol === 'admin' || user?.rol === 'dt';
   const puedeEliminar = user?.rol === 'admin' || user?.rol === 'dt';
 
+  // Obtener datos del club desde el usuario (ya deberían venir del backend)
+  const clubPlan = user?.club_plan || 'trial';
+  const jugadoresMax = user?.jugadores_max || 30;
+  const fechaExpiracionTrial = user?.fecha_expiracion_trial;
+
+  // Calcular días restantes de trial
+  const calcularDiasRestantes = () => {
+    if (!fechaExpiracionTrial) return null;
+    const hoy = new Date();
+    const expiracion = new Date(fechaExpiracionTrial);
+    const diffTime = expiracion - hoy;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+  const diasRestantes = calcularDiasRestantes();
+
   useEffect(() => {
     cargarJugadores();
   }, []);
@@ -145,10 +161,44 @@ function Dashboard({ user, onLogout }) {
       </nav>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Mis Jugadores</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-8">Mis Jugadores</h1>
+
+        {/* TARJETA DE SUSCRIPCIÓN */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-blue-200">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Estado de la suscripción</h2>
           
-          {/* Buscador */}
+          {/* Barra de progreso de jugadores */}
+          <div className="mb-4">
+            <div className="flex justify-between text-sm text-gray-600 mb-1">
+              <span>Jugadores: {jugadores.length} / {jugadoresMax}</span>
+              <span>{Math.round((jugadores.length / jugadoresMax) * 100)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div 
+                className="bg-blue-600 h-2.5 rounded-full" 
+                style={{ width: `${(jugadores.length / jugadoresMax) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+
+          {/* Días restantes (si está en trial) */}
+          {clubPlan === 'trial' && diasRestantes !== null && (
+            <div className="mb-4 text-sm">
+              <span className="font-semibold">Período de prueba:</span> {diasRestantes} días restantes
+            </div>
+          )}
+
+          {/* Botón de actualizar plan */}
+          <button
+            onClick={() => alert('Próximamente podrás actualizar tu plan. Por ahora, contactá al administrador.')}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition w-full"
+          >
+            Actualizar plan
+          </button>
+        </div>
+
+        {/* Buscador */}
+        <div className="flex justify-between items-center mb-8">
           <div className="relative">
             <input
               type="text"
@@ -166,19 +216,17 @@ function Dashboard({ user, onLogout }) {
               </button>
             )}
           </div>
-        </div>
 
-        {/* Botón para agregar jugador */}
-        {puedeCrear && (
-          <div className="mb-6 flex justify-end">
+          {/* Botón para agregar jugador */}
+          {puedeCrear && (
             <button
               onClick={() => setShowAgregarModal(true)}
               className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2"
             >
               <span className="text-xl">+</span> Agregar Jugador
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Resultado de búsqueda */}
         {searchTerm && (
@@ -208,24 +256,6 @@ function Dashboard({ user, onLogout }) {
                     <p><span className="font-semibold">Pierna hábil:</span> {jugador.pierna_habil}</p>
                     {jugador.dni && <p><span className="font-semibold">DNI:</span> {jugador.dni}</p>}
                   </div>
-
-                  {/* Botones de acción (solo para admin/dt) */}
-                  {puedeEditar && (
-                    <div className="mt-4 flex gap-2">
-                      <button
-                        onClick={() => handleEditarClick(jugador)}
-                        className="flex-1 bg-yellow-500 text-white py-2 rounded-lg text-sm hover:bg-yellow-600 transition flex items-center justify-center gap-1"
-                      >
-                        ✏️ Editar
-                      </button>
-                      <button
-                        onClick={() => handleEliminarClick(jugador)}
-                        className="flex-1 bg-red-500 text-white py-2 rounded-lg text-sm hover:bg-red-600 transition flex items-center justify-center gap-1"
-                      >
-                        🗑️ Eliminar
-                      </button>
-                    </div>
-                  )}
 
                   {jugador.ultima_evaluacion ? (
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -297,6 +327,24 @@ function Dashboard({ user, onLogout }) {
                       Ver Evaluaciones
                     </Link>
                   </div>
+
+                  {/* Botones de acción (solo para admin/dt) */}
+                  {puedeEditar && (
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        onClick={() => handleEditarClick(jugador)}
+                        className="flex-1 bg-yellow-500 text-white py-2 rounded-lg text-sm hover:bg-yellow-600 transition flex items-center justify-center gap-1"
+                      >
+                        ✏️ Editar
+                      </button>
+                      <button
+                        onClick={() => handleEliminarClick(jugador)}
+                        className="flex-1 bg-red-500 text-white py-2 rounded-lg text-sm hover:bg-red-600 transition flex items-center justify-center gap-1"
+                      >
+                        🗑️ Eliminar
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
