@@ -12,6 +12,9 @@ function Multimedia() {
   const [showForm, setShowForm] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [showViewer, setShowViewer] = useState(false);
+  const [jugadores, setJugadores] = useState([]);
+  const [showEtiquetar, setShowEtiquetar] = useState(false);
+  const [jugadoresSeleccionados, setJugadoresSeleccionados] = useState([]);
   const [nuevoEvento, setNuevoEvento] = useState({
     nombre: '',
     tipo: 'partido',
@@ -25,6 +28,7 @@ function Multimedia() {
 
   useEffect(() => {
     cargarEventos();
+    cargarJugadores();
   }, []);
 
   const cargarEventos = async () => {
@@ -35,6 +39,15 @@ function Multimedia() {
       console.error('Error cargando eventos:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const cargarJugadores = async () => {
+    try {
+      const response = await api.get('/jugadores');
+      setJugadores(response.data.jugadores);
+    } catch (error) {
+      console.error('Error cargando jugadores:', error);
     }
   };
 
@@ -71,25 +84,8 @@ function Multimedia() {
     }
   };
 
-  const handleFileSelect = (e, idEvento, visibilidad) => {
-    const files = e.target.files;
-    if (!files.length) return;
-
-    setArchivoSubiendo({
-      files: files,
-      idEvento: idEvento,
-      visibilidad: visibilidad
-    });
-
-    if (visibilidad === 'privado') {
-      setShowEtiquetar(true);
-      setJugadoresSeleccionados([]);
-    } else {
-      handleFileUpload(files, idEvento, visibilidad, []);
-    }
-  };
-
-  const handleFileUpload = async (files, idEvento, visibilidad, jugadoresIds) => {
+  // Función para subir archivos
+  const handleFileUpload = async (files, idEvento, visibilidad, jugadoresIds = []) => {
     setUploading(true);
     
     for (let i = 0; i < files.length; i++) {
@@ -124,10 +120,50 @@ function Multimedia() {
     
     setUploading(false);
     alert('Archivos subidos correctamente');
+    setShowEtiquetar(false);
+    setJugadoresSeleccionados([]);
     cargarEventos();
     if (selectedEvento) {
       cargarArchivos(selectedEvento.id_evento);
     }
+  };
+
+  // Manejar selección de archivos
+  const handleFileSelect = (e, idEvento, visibilidad) => {
+    const files = e.target.files;
+    if (!files.length) return;
+
+    if (visibilidad === 'privado') {
+      // Si es privado, mostrar modal para etiquetar
+      setShowEtiquetar(true);
+      setJugadoresSeleccionados([]);
+      // Guardamos los datos en el estado para usarlos después
+      setArchivoSubiendoTemp({ files, idEvento, visibilidad });
+    } else {
+      // Si es público, subir directamente
+      handleFileUpload(files, idEvento, visibilidad);
+    }
+  };
+
+  // Estado temporal para el archivo que se está subiendo
+  const [archivoSubiendoTemp, setArchivoSubiendoTemp] = useState(null);
+
+  const confirmarEtiquetado = () => {
+    if (archivoSubiendoTemp) {
+      handleFileUpload(
+        archivoSubiendoTemp.files,
+        archivoSubiendoTemp.idEvento,
+        archivoSubiendoTemp.visibilidad,
+        jugadoresSeleccionados
+      );
+      setArchivoSubiendoTemp(null);
+    }
+  };
+
+  const cancelarEtiquetado = () => {
+    setShowEtiquetar(false);
+    setJugadoresSeleccionados([]);
+    setArchivoSubiendoTemp(null);
   };
 
   const handleEventoClick = async (evento) => {
@@ -166,6 +202,16 @@ function Multimedia() {
     return visibilidad === 'publico' 
       ? 'bg-green-100 text-green-800' 
       : 'bg-yellow-100 text-yellow-800';
+  };
+
+  const toggleJugador = (jugadorId) => {
+    setJugadoresSeleccionados(prev => {
+      if (prev.includes(jugadorId)) {
+        return prev.filter(id => id !== jugadorId);
+      } else {
+        return [...prev, jugadorId];
+      }
+    });
   };
 
   if (loading) {
@@ -340,6 +386,53 @@ function Multimedia() {
             </div>
           ))}
         </div>
+
+        {/* Modal de etiquetado */}
+        {showEtiquetar && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+              <div className="p-6">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Etiquetar jugadores</h2>
+                <p className="text-gray-600 mb-4">
+                  Seleccioná los jugadores que aparecen en este archivo:
+                </p>
+
+                <div className="max-h-60 overflow-y-auto mb-4 border rounded-lg p-2">
+                  {jugadores.map((jugador) => (
+                    <div key={jugador.id_jugador} className="flex items-center gap-2 py-2 border-b last:border-0">
+                      <input
+                        type="checkbox"
+                        id={`jugador-${jugador.id_jugador}`}
+                        checked={jugadoresSeleccionados.includes(jugador.id_jugador)}
+                        onChange={() => toggleJugador(jugador.id_jugador)}
+                        className="w-4 h-4"
+                      />
+                      <label htmlFor={`jugador-${jugador.id_jugador}`} className="flex-1">
+                        {jugador.nombre} {jugador.apellido}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-4">
+                  <button
+                    onClick={confirmarEtiquetado}
+                    disabled={uploading}
+                    className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                  >
+                    {uploading ? 'Subiendo...' : 'Confirmar y subir'}
+                  </button>
+                  <button
+                    onClick={cancelarEtiquetado}
+                    className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {selectedEvento && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40">
