@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Evaluaciones from './pages/Evaluaciones';
 import Multimedia from './pages/Multimedia';
 import Landing from './pages/Landing';
+import Planes from './pages/Planes';  // <-- NUEVO IMPORT
 import './index.css';
 
 function App() {
@@ -53,6 +54,9 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
+        
+        {/* NUEVA RUTA PARA PLANES */}
+        <Route path="/planes" element={<Planes />} />
         
         <Route 
           path="/dashboard" 

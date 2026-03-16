@@ -188,12 +188,12 @@ function Dashboard({ user, onLogout }) {
             </div>
           )}
 
-          {/* Botón de actualizar plan */}
+          {/* Botón para ver planes y actualizar (MODIFICADO) */}
           <button
-            onClick={() => alert('Próximamente podrás actualizar tu plan. Por ahora, contactá al administrador.')}
+            onClick={() => window.location.href = '/mi-equipo-pro-frontend/#/planes'}
             className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition w-full"
           >
-            Actualizar plan
+            Ver planes y actualizar
           </button>
         </div>
 
