@@ -16,8 +16,9 @@ const Navbar = () => {
           <div className="hidden md:flex space-x-8">
             <a href="#features" className="text-gray-700 hover:text-blue-600 transition">Características</a>
             <a href="#testimonials" className="text-gray-700 hover:text-blue-600 transition">Testimonios</a>
-            <a href="#pricing" className="text-gray-700 hover:text-blue-600 transition">Planes</a>
-            <a href="#contact" className="text-gray-700 hover:text-blue-600 transition">Contacto</a>
+            {/* Estos dos ahora son Links a páginas */}
+            <Link to="/planes" className="text-gray-700 hover:text-blue-600 transition">Planes</Link>
+            <Link to="/contacto" className="text-gray-700 hover:text-blue-600 transition">Contacto</Link>
           </div>
 
           {/* Botones de acción */}
@@ -28,12 +29,12 @@ const Navbar = () => {
             >
               Iniciar Sesión
             </Link>
-            <a
-              href="#register"
+            <Link
+              to="/register"
               className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
             >
               Registrarse
-            </a>
+            </Link>
           </div>
         </div>
       </div>

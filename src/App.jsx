@@ -6,7 +6,8 @@ import Dashboard from './pages/Dashboard';
 import Evaluaciones from './pages/Evaluaciones';
 import Multimedia from './pages/Multimedia';
 import Landing from './pages/Landing';
-import Planes from './pages/Planes';  // <-- NUEVO IMPORT
+import Planes from './pages/Planes';
+import Contacto from './pages/Contacto';   // 👈 IMPORT AGREGADO
 import './index.css';
 
 function App() {
@@ -55,9 +56,11 @@ function App() {
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
         
-        {/* NUEVA RUTA PARA PLANES */}
+        {/* Rutas públicas */}
         <Route path="/planes" element={<Planes />} />
+        <Route path="/contacto" element={<Contacto />} />   {/* 👈 RUTA AGREGADA */}
         
+        {/* Rutas protegidas (requieren usuario) */}
         <Route 
           path="/dashboard" 
           element={user ? <Dashboard user={user} onLogout={handleLogout} /> : <Navigate to="/login" />} 
