@@ -20,7 +20,7 @@ function Dashboard({ user, onLogout }) {
   const puedeEditar = user?.rol === 'admin' || user?.rol === 'dt';
   const puedeEliminar = user?.rol === 'admin' || user?.rol === 'dt';
 
-  // Obtener datos del club desde el usuario (ya deberían venir del backend)
+  // Obtener datos del club desde el usuario
   const clubPlan = user?.club_plan || 'trial';
   const jugadoresMax = user?.jugadores_max || 30;
   const fechaExpiracionTrial = user?.fecha_expiracion_trial;
@@ -113,6 +113,17 @@ function Dashboard({ user, onLogout }) {
     return fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
   };
 
+  // NUEVA FUNCIÓN para formatear fecha de registro
+  const formatearFechaRegistro = (fechaString) => {
+    if (!fechaString) return 'Desconocida';
+    const fecha = new Date(fechaString);
+    return fecha.toLocaleDateString('es-ES', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
   const barraProgreso = (valor) => {
     const porcentaje = valor * 10;
     let colorBarra = 'bg-blue-600';
@@ -188,7 +199,7 @@ function Dashboard({ user, onLogout }) {
             </div>
           )}
 
-          {/* Botón para ver planes y actualizar (MODIFICADO) */}
+          {/* Botón para ver planes y actualizar */}
           <button
             onClick={() => window.location.href = '/mi-equipo-pro-frontend/#/planes'}
             className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition w-full"
@@ -255,6 +266,8 @@ function Dashboard({ user, onLogout }) {
                     <p><span className="font-semibold">Edad:</span> {jugador.edad} años</p>
                     <p><span className="font-semibold">Pierna hábil:</span> {jugador.pierna_habil}</p>
                     {jugador.dni && <p><span className="font-semibold">DNI:</span> {jugador.dni}</p>}
+                    {/* 👇 NUEVA LÍNEA PARA MOSTRAR FECHA DE REGISTRO */}
+                    <p><span className="font-semibold">Registrado:</span> {formatearFechaRegistro(jugador.fecha_creacion)}</p>
                   </div>
 
                   {jugador.ultima_evaluacion ? (
