@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import ModalEtiquetarJugadores from '../components/ModalEtiquetarJugadores';
 
 function Multimedia() {
   const navigate = useNavigate();
@@ -12,9 +13,6 @@ function Multimedia() {
   const [showForm, setShowForm] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [showViewer, setShowViewer] = useState(false);
-  const [jugadores, setJugadores] = useState([]);
-  const [showEtiquetar, setShowEtiquetar] = useState(false);
-  const [jugadoresSeleccionados, setJugadoresSeleccionados] = useState([]);
   const [nuevoEvento, setNuevoEvento] = useState({
     nombre: '',
     tipo: 'partido',
@@ -23,12 +21,16 @@ function Multimedia() {
     descripcion: ''
   });
 
+  // Estados para manejar etiquetado
+  const [archivoSubiendo, setArchivoSubiendo] = useState(null);
+  const [showEtiquetar, setShowEtiquetar] = useState(false);
+  const [jugadoresSeleccionados, setJugadoresSeleccionados] = useState([]);
+
   const user = JSON.parse(localStorage.getItem('user'));
   const puedeSubir = user?.rol === 'admin' || user?.rol === 'dt' || user?.rol === 'preparador';
 
   useEffect(() => {
     cargarEventos();
-    cargarJugadores();
   }, []);
 
   const cargarEventos = async () => {
@@ -39,15 +41,6 @@ function Multimedia() {
       console.error('Error cargando eventos:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const cargarJugadores = async () => {
-    try {
-      const response = await api.get('/jugadores');
-      setJugadores(response.data.jugadores);
-    } catch (error) {
-      console.error('Error cargando jugadores:', error);
     }
   };
 
@@ -84,8 +77,19 @@ function Multimedia() {
     }
   };
 
-  // Función para subir archivos
-  const handleFileUpload = async (files, idEvento, visibilidad, jugadoresIds = []) => {
+  const handleFileSelect = (e, idEvento, visibilidad) => {
+    const files = e.target.files;
+    if (!files.length) return;
+
+    if (visibilidad === 'privado') {
+      setArchivoSubiendo({ files, idEvento, visibilidad });
+      setShowEtiquetar(true);
+    } else {
+      handleFileUpload(files, idEvento, visibilidad, []);
+    }
+  };
+
+  const handleFileUpload = async (files, idEvento, visibilidad, jugadoresIds) => {
     setUploading(true);
     
     for (let i = 0; i < files.length; i++) {
@@ -120,50 +124,43 @@ function Multimedia() {
     
     setUploading(false);
     alert('Archivos subidos correctamente');
-    setShowEtiquetar(false);
-    setJugadoresSeleccionados([]);
     cargarEventos();
     if (selectedEvento) {
       cargarArchivos(selectedEvento.id_evento);
     }
   };
 
-  // Manejar selección de archivos
-  const handleFileSelect = (e, idEvento, visibilidad) => {
-    const files = e.target.files;
-    if (!files.length) return;
+  // NUEVA FUNCIÓN: Eliminar archivo
+  const handleEliminarArchivo = async (archivo, e) => {
+    e.stopPropagation(); // Evita que se abra el visor al hacer clic en eliminar
+    
+    if (!window.confirm('¿Estás seguro de que querés eliminar este archivo?')) {
+      return;
+    }
 
-    if (visibilidad === 'privado') {
-      // Si es privado, mostrar modal para etiquetar
-      setShowEtiquetar(true);
-      setJugadoresSeleccionados([]);
-      // Guardamos los datos en el estado para usarlos después
-      setArchivoSubiendoTemp({ files, idEvento, visibilidad });
-    } else {
-      // Si es público, subir directamente
-      handleFileUpload(files, idEvento, visibilidad);
+    try {
+      await api.delete(`/multimedia/archivos/${archivo.id_archivo}`);
+      // Actualizar la lista de archivos
+      setArchivos(archivos.filter(a => a.id_archivo !== archivo.id_archivo));
+      // También actualizar los contadores en el evento (si es necesario)
+      cargarEventos();
+    } catch (error) {
+      console.error('Error eliminando archivo:', error);
+      alert('Error al eliminar el archivo');
     }
   };
 
-  // Estado temporal para el archivo que se está subiendo
-  const [archivoSubiendoTemp, setArchivoSubiendoTemp] = useState(null);
-
-  const confirmarEtiquetado = () => {
-    if (archivoSubiendoTemp) {
+  const handleConfirmarEtiquetas = (jugadoresIds) => {
+    if (archivoSubiendo) {
       handleFileUpload(
-        archivoSubiendoTemp.files,
-        archivoSubiendoTemp.idEvento,
-        archivoSubiendoTemp.visibilidad,
-        jugadoresSeleccionados
+        archivoSubiendo.files,
+        archivoSubiendo.idEvento,
+        archivoSubiendo.visibilidad,
+        jugadoresIds
       );
-      setArchivoSubiendoTemp(null);
+      setShowEtiquetar(false);
+      setArchivoSubiendo(null);
     }
-  };
-
-  const cancelarEtiquetado = () => {
-    setShowEtiquetar(false);
-    setJugadoresSeleccionados([]);
-    setArchivoSubiendoTemp(null);
   };
 
   const handleEventoClick = async (evento) => {
@@ -202,16 +199,6 @@ function Multimedia() {
     return visibilidad === 'publico' 
       ? 'bg-green-100 text-green-800' 
       : 'bg-yellow-100 text-yellow-800';
-  };
-
-  const toggleJugador = (jugadorId) => {
-    setJugadoresSeleccionados(prev => {
-      if (prev.includes(jugadorId)) {
-        return prev.filter(id => id !== jugadorId);
-      } else {
-        return [...prev, jugadorId];
-      }
-    });
   };
 
   if (loading) {
@@ -387,53 +374,6 @@ function Multimedia() {
           ))}
         </div>
 
-        {/* Modal de etiquetado */}
-        {showEtiquetar && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-              <div className="p-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Etiquetar jugadores</h2>
-                <p className="text-gray-600 mb-4">
-                  Seleccioná los jugadores que aparecen en este archivo:
-                </p>
-
-                <div className="max-h-60 overflow-y-auto mb-4 border rounded-lg p-2">
-                  {jugadores.map((jugador) => (
-                    <div key={jugador.id_jugador} className="flex items-center gap-2 py-2 border-b last:border-0">
-                      <input
-                        type="checkbox"
-                        id={`jugador-${jugador.id_jugador}`}
-                        checked={jugadoresSeleccionados.includes(jugador.id_jugador)}
-                        onChange={() => toggleJugador(jugador.id_jugador)}
-                        className="w-4 h-4"
-                      />
-                      <label htmlFor={`jugador-${jugador.id_jugador}`} className="flex-1">
-                        {jugador.nombre} {jugador.apellido}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex gap-4">
-                  <button
-                    onClick={confirmarEtiquetado}
-                    disabled={uploading}
-                    className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-                  >
-                    {uploading ? 'Subiendo...' : 'Confirmar y subir'}
-                  </button>
-                  <button
-                    onClick={cancelarEtiquetado}
-                    className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {selectedEvento && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -443,9 +383,10 @@ function Multimedia() {
                   <button onClick={() => setSelectedEvento(null)} className="text-gray-500 hover:text-gray-700 text-2xl">✕</button>
                 </div>
                 <p className="text-gray-600 mb-4">{formatFecha(selectedEvento.fecha)} - {selectedEvento.lugar}</p>
+                
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {archivos.map((archivo) => (
-                    <div key={archivo.id_archivo} className="aspect-square bg-gray-200 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition relative"
+                    <div key={archivo.id_archivo} className="aspect-square bg-gray-200 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition relative group"
                       onClick={() => openFileViewer(archivo)}
                     >
                       {archivo.tipo === 'foto' ? (
@@ -456,15 +397,36 @@ function Multimedia() {
                           <span className="text-xs text-center px-2">{archivo.titulo}</span>
                         </div>
                       )}
-                      <span className={`absolute top-1 right-1 px-1 py-0.5 rounded-full text-[8px] font-semibold ${getVisibilidadColor(archivo.visibilidad)}`}>
+                      
+                      {/* Etiqueta de visibilidad */}
+                      <span className={`absolute top-1 left-1 px-1 py-0.5 rounded-full text-[8px] font-semibold ${getVisibilidadColor(archivo.visibilidad)}`}>
                         {archivo.visibilidad === 'publico' ? '🌐' : '🔒'}
                       </span>
+
+                      {/* Botón de eliminar (solo para usuarios con permiso) */}
+                      {puedeSubir && (
+                        <button
+                          onClick={(e) => handleEliminarArchivo(archivo, e)}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                          title="Eliminar archivo"
+                        >
+                          ✕
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
-                {archivos.length === 0 && <div className="text-center py-12"><p className="text-gray-500">No hay archivos en este evento</p></div>}
+                
+                {archivos.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500">No hay archivos en este evento</p>
+                  </div>
+                )}
+                
                 <div className="mt-6 flex justify-end">
-                  <button onClick={() => setSelectedEvento(null)} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">Cerrar</button>
+                  <button onClick={() => setSelectedEvento(null)} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                    Cerrar
+                  </button>
                 </div>
               </div>
             </div>
@@ -494,6 +456,17 @@ function Multimedia() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Modal de etiquetado */}
+        {showEtiquetar && (
+          <ModalEtiquetarJugadores
+            onConfirm={handleConfirmarEtiquetas}
+            onCancel={() => {
+              setShowEtiquetar(false);
+              setArchivoSubiendo(null);
+            }}
+          />
         )}
       </div>
     </div>
