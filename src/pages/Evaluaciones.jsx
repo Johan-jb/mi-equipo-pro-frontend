@@ -20,8 +20,6 @@ function Evaluaciones() {
   const [showEliminarModal, setShowEliminarModal] = useState(false);
   const [evaluacionSeleccionada, setEvaluacionSeleccionada] = useState(null);
   const [showHabilidadesModal, setShowHabilidadesModal] = useState(false);
-  
-  // Nuevos estados para el selector de fechas
   const [fechaSeleccionada, setFechaSeleccionada] = useState('');
   const [evaluacionesFechas, setEvaluacionesFechas] = useState([]);
 
@@ -44,7 +42,6 @@ function Evaluaciones() {
       setEvaluaciones(evalRes.data.evaluaciones);
       setHabilidades(habRes.data.habilidad);
       
-      // Obtener fechas únicas de las evaluaciones para el selector
       const fechas = evalRes.data.evaluaciones.map(e => e.fecha_evaluacion.split('T')[0]);
       setEvaluacionesFechas([...new Set(fechas)]);
       
@@ -67,7 +64,6 @@ function Evaluaciones() {
     });
   };
 
-  // Descargar el último informe (el más reciente)
   const descargarPDF = async () => {
     try {
       const response = await api.get(`/informes/jugador/${id}/pdf`, {
@@ -88,7 +84,6 @@ function Evaluaciones() {
     }
   };
 
-  // Nueva función: descargar informe de una fecha específica
   const descargarPDFPorFecha = async () => {
     if (!fechaSeleccionada) {
       alert('Seleccioná una fecha primero');
@@ -205,15 +200,13 @@ function Evaluaciones() {
                   </div>
                 </div>
                 <div className="flex gap-4 items-center">
-                  {/* Botón: Último informe */}
                   <button
                     onClick={descargarPDF}
                     className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition flex items-center gap-2"
                   >
-                    <span>📄</span> Descargar Último Informe
+                    <span>📄</span> Descargar Informe PDF
                   </button>
 
-                  {/* Selector de fecha y botón de descarga por fecha */}
                   {evaluacionesFechas.length > 0 && (
                     <div className="flex gap-2 items-center bg-white rounded-lg shadow p-2">
                       <select
@@ -376,7 +369,6 @@ function Evaluaciones() {
                       </div>
                     )}
 
-                    {/* Botones de acción para evaluaciones */}
                     {puedeEditar && (
                       <div className="mt-4 flex justify-end gap-2">
                         <button
@@ -401,7 +393,6 @@ function Evaluaciones() {
         )}
       </div>
 
-      {/* Modales */}
       {showNuevaModal && (
         <ModalNuevaEvaluacion
           jugadorId={id}
