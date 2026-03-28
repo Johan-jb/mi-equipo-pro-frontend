@@ -5,7 +5,7 @@ import api from '../services/api';
 import ModalNuevaEvaluacion from '../components/ModalNuevaEvaluacion';
 import ModalEditarEvaluacion from '../components/ModalEditarEvaluacion';
 import ModalConfirmarEliminar from '../components/ModalConfirmarEliminar';
-import ModalHabilidades from '../components/ModalHabilidades'; // 👈 NUEVO IMPORT
+import ModalHabilidades from '../components/ModalHabilidades';
 
 function Evaluaciones() {
   const { id } = useParams();
@@ -19,7 +19,11 @@ function Evaluaciones() {
   const [showEditarModal, setShowEditarModal] = useState(false);
   const [showEliminarModal, setShowEliminarModal] = useState(false);
   const [evaluacionSeleccionada, setEvaluacionSeleccionada] = useState(null);
-  const [showHabilidadesModal, setShowHabilidadesModal] = useState(false); // 👈 NUEVO STATE
+  const [showHabilidadesModal, setShowHabilidadesModal] = useState(false);
+  
+  // Nuevos estados para el selector de fechas
+  const [fechaSeleccionada, setFechaSeleccionada] = useState('');
+  const [evaluacionesFechas, setEvaluacionesFechas] = useState([]);
 
   const user = JSON.parse(localStorage.getItem('user'));
   const puedeEditar = user?.rol === 'admin' || user?.rol === 'dt' || user?.rol === 'preparador';
@@ -39,6 +43,11 @@ function Evaluaciones() {
       setJugador(jugadorRes.data.jugador);
       setEvaluaciones(evalRes.data.evaluaciones);
       setHabilidades(habRes.data.habilidad);
+      
+      // Obtener fechas únicas de las evaluaciones para el selector
+      const fechas = evalRes.data.evaluaciones.map(e => e.fecha_evaluacion.split('T')[0]);
+      setEvaluacionesFechas([...new Set(fechas)]);
+      
     } catch (err) {
       setError('Error al cargar las evaluaciones');
     } finally {
@@ -46,7 +55,6 @@ function Evaluaciones() {
     }
   };
 
-  // 👇 NUEVA FUNCIÓN
   const handleHabilidadesCargadas = (nuevasHabilidades) => {
     setHabilidades(nuevasHabilidades);
   };
@@ -59,6 +67,7 @@ function Evaluaciones() {
     });
   };
 
+  // Descargar el último informe (el más reciente)
   const descargarPDF = async () => {
     try {
       const response = await api.get(`/informes/jugador/${id}/pdf`, {
@@ -76,6 +85,32 @@ function Evaluaciones() {
     } catch (error) {
       console.error('Error descargando PDF:', error);
       alert('Error al descargar el PDF');
+    }
+  };
+
+  // Nueva función: descargar informe de una fecha específica
+  const descargarPDFPorFecha = async () => {
+    if (!fechaSeleccionada) {
+      alert('Seleccioná una fecha primero');
+      return;
+    }
+
+    try {
+      const response = await api.get(`/informes/jugador/${id}/pdf?fecha=${fechaSeleccionada}`, {
+        responseType: 'blob'
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `informe_${jugador.nombre}_${jugador.apellido}_${fechaSeleccionada}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error descargando PDF por fecha:', error);
+      alert('Error al descargar el PDF de la fecha seleccionada');
     }
   };
 
@@ -169,12 +204,48 @@ function Evaluaciones() {
                     <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">{jugador.pierna_habil}</span>
                   </div>
                 </div>
-                <button
-                  onClick={descargarPDF}
-                  className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition flex items-center gap-2"
-                >
-                  <span>📄</span> Descargar Informe PDF
-                </button>
+                <div className="flex gap-4 items-center">
+                  {/* Botón: Último informe */}
+                  <button
+                    onClick={descargarPDF}
+                    className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition flex items-center gap-2"
+                  >
+                    <span>📄</span> Descargar Último Informe
+                  </button>
+
+                  {/* Selector de fecha y botón de descarga por fecha */}
+                  {evaluacionesFechas.length > 0 && (
+                    <div className="flex gap-2 items-center bg-white rounded-lg shadow p-2">
+                      <select
+                        value={fechaSeleccionada}
+                        onChange={(e) => setFechaSeleccionada(e.target.value)}
+                        className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500"
+                      >
+                        <option value="">Seleccionar fecha</option>
+                        {evaluacionesFechas.map((fecha, index) => (
+                          <option key={index} value={fecha}>
+                            {new Date(fecha).toLocaleDateString('es-ES', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={descargarPDFPorFecha}
+                        disabled={!fechaSeleccionada}
+                        className={`px-4 py-2 rounded-lg font-semibold transition ${
+                          fechaSeleccionada 
+                            ? 'bg-green-600 text-white hover:bg-green-700' 
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        Descargar de esta fecha
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -234,7 +305,7 @@ function Evaluaciones() {
               </div>
             )}
 
-            <div className="mb-6 flex justify-end gap-4"> {/* 👈 Agregué gap-4 para separar botones */}
+            <div className="mb-6 flex justify-end gap-4">
               <button
                 onClick={() => setShowHabilidadesModal(true)}
                 className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition flex items-center gap-2"
@@ -364,7 +435,6 @@ function Evaluaciones() {
         />
       )}
 
-      {/* 👇 NUEVO MODAL DE HABILIDADES */}
       {showHabilidadesModal && (
         <ModalHabilidades
           jugadorId={id}
